@@ -1,0 +1,1 @@
+python parser/Cparser.py ./input 4 output/result.json
