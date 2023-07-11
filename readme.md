@@ -2,8 +2,8 @@
 + 环境配置步骤
 
   ```
-  conda create -n name python==3.8
-  source activate python
+  conda create -n anyname python==3.8
+  source activate anyname
   pip install antlr4-python3-runtime
   ```
 + 如果遇到一些库没有下载的情况，可以手动下载未安装的库
