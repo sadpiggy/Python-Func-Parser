@@ -2,7 +2,7 @@
 + 环境配置步骤
 
   ```
-  conda create -n anyname python==3.8
+  conda create -n anyname python=3.8
   source activate anyname
   pip install antlr4-python3-runtime
   ```

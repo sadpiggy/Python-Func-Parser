@@ -124,15 +124,6 @@ class BodyParser(ParseTreeListener):
         parser = FunctionParser(tokens)
         parser.removeErrorListeners()
         
-        # op_tokens = lexer.getAllTokens()
-        # for token in op_tokens:
-        #     token2:CommonToken = token 
-        #     if token2.type == FunctionLexer.IDENTIFIER:
-        
-        
-        # for token in tokens:
-        #     print("ha")
-        #     print(token)
 
         if bSLL != 0:
             parser._interp.predictionMode = PredictionMode.SLL
@@ -156,13 +147,16 @@ class BodyParser(ParseTreeListener):
 
     def enterEveryRule(self, ctx:ParserRuleContext):
         # print("enterEveryRule")
+        # print(type(ctx))
         ruleIndex = ctx.getRuleIndex()
 
         if ruleIndex == BodyParser.IDX[BodyParser.DECLARATOR]:
             self.declaratorFlag = 1
         elif ruleIndex == BodyParser.IDX[BodyParser.TYPE_NAME]:
             self.typeNameFlag = 1
-        elif ruleIndex == BodyParser.IDX[BodyParser.FUNCTION_CALL]:
+        # elif ruleIndex == BodyParser.IDX[BodyParser.FUNCTION_CALL]:
+        #     self.funcCallFlag = 1
+        elif type(ctx) == FunctionParser.FuncCallContext:
             self.funcCallFlag = 1
 
     def exitEveryRule(self, ctx:ParserRuleContext):
