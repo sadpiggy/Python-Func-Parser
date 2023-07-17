@@ -10,6 +10,8 @@ from typing import Any, List
 
 from CLexer import CLexer
 
+from CPP14Lexer import CPP14Lexer
+
 import json
 import hashlib
 import re
@@ -18,6 +20,7 @@ import math
 
 from threading import Lock
 
+use_cpp_parser = 1
 
 class Cparser:
     funcResultList = []
@@ -55,6 +58,7 @@ class Cparser:
                     # parse the function info
                     treeParser = TreeParser()
                     funcObjs = treeParser.ParseFile(filePath)
+                    # return
 
                     for funcObj in funcObjs:
                         functionAttr = {
@@ -63,24 +67,41 @@ class Cparser:
                             "function_name": funcObj.name,
                             "file_path": filePath.replace(repoPath, "")
                         }
-
-                        cLexer = CLexer(InputStream(funcObj.funcBody))
-                        tokens = list(cLexer.getAllTokens())
+                        
                         tokenAttributes = {
                             "operators": [],
                             "operands": []
                         }
+                        
+                        CoperandsTypes = [CLexer.Identifier,CLexer.Constant,CLexer.DigitSequence,CLexer.StringLiteral]
+                        # 具体有哪些呢？
+                        CPPoperandsTypes = [CPP14Lexer.Identifier, CPP14Lexer.IntegerLiteral, CPP14Lexer.CharacterLiteral, CPP14Lexer.FloatingLiteral, CPP14Lexer.StringLiteral, CPP14Lexer.BooleanLiteral, CPP14Lexer.PointerLiteral,CPP14Lexer.UserDefinedLiteral,
+                                            CPP14Lexer.UserDefinedCharacterLiteral, CPP14Lexer.UserDefinedFloatingLiteral, CPP14Lexer.UserDefinedIntegerLiteral, CPP14Lexer.UserDefinedStringLiteral,
+                                            CPP14Lexer.DecimalLiteral, CPP14Lexer.OctalLiteral, CPP14Lexer.HexadecimalLiteral, CPP14Lexer.BinaryLiteral, CPP14Lexer.Integersuffix]
+                        
+                        if use_cpp_parser == 0:
+                            cLexer = CLexer(InputStream(funcObj.funcBody))
+                            tokens = cLexer.getAllTokens()
+                            tokens = list(tokens)
 
-                        for token in tokens:
-                            if token.type in [
-                                CLexer.Identifier,
-                                CLexer.Constant,
-                                CLexer.DigitSequence,
-                                CLexer.StringLiteral
-                            ]:
-                                tokenAttributes["operands"].append(token.text)
-                            else:
-                                tokenAttributes["operators"].append(token.text)
+                            for token in tokens:
+                                if token.type in CoperandsTypes:
+                                    tokenAttributes["operands"].append(token.text)
+                                else:
+                                    tokenAttributes["operators"].append(token.text)
+                                    
+                        else:
+                            cppLexer = CPP14Lexer(InputStream(funcObj.funcBody))
+                            tokens = cppLexer.getAllTokens()
+                            tokens = list(tokens)
+                            
+                            for token in tokens:
+                                if token.type in CPPoperandsTypes:
+                                    tokenAttributes["operands"].append(token.text)
+                                else:
+                                    tokenAttributes["operators"].append(token.text)
+                            
+
 
                         function_content_no_comment = Cparser.removeComment(funcObj.funcBody)
 
@@ -187,8 +208,8 @@ class Cparser:
             f.write(gsonObject)
 
 
-
 if __name__ == "__main__":
+    
     argv = sys.argv
     argc = len(argv)
     if argc < 4:
@@ -197,10 +218,7 @@ if __name__ == "__main__":
     repoPath = argv[1]
     concurrent_size = int(argv[2])
     finalResultPath = argv[3]
-    
+
     Cparser.main(argv[1:])
+
     
-    # parser = TreeParser()
-    # funcObjs:List[Function] =  parser.ParseFile("../input/hello.c")
-    # for funcObj in funcObjs:
-    #     lexer = CLexer(InputStream(funcObj.funcBody))

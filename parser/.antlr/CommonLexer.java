@@ -1,4 +1,4 @@
-// Generated from /home/srb/wky/lab/ntu/Py-Func-Parser/parser/Common.g4 by ANTLR 4.9.2
+// Generated from /home/srb/wky/lab/ntu/Python-Func-Parser/parser/Common.g4 by ANTLR 4.9.2
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;
