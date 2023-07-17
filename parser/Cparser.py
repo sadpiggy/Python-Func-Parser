@@ -73,14 +73,17 @@ class Cparser:
                             "operands": []
                         }
                         
+                        
                         CoperandsTypes = [CLexer.Identifier,CLexer.Constant,CLexer.DigitSequence,CLexer.StringLiteral]
                         # 具体有哪些呢？
                         CPPoperandsTypes = [CPP14Lexer.Identifier, CPP14Lexer.IntegerLiteral, CPP14Lexer.CharacterLiteral, CPP14Lexer.FloatingLiteral, CPP14Lexer.StringLiteral, CPP14Lexer.BooleanLiteral, CPP14Lexer.PointerLiteral,CPP14Lexer.UserDefinedLiteral,
                                             CPP14Lexer.UserDefinedCharacterLiteral, CPP14Lexer.UserDefinedFloatingLiteral, CPP14Lexer.UserDefinedIntegerLiteral, CPP14Lexer.UserDefinedStringLiteral,
                                             CPP14Lexer.DecimalLiteral, CPP14Lexer.OctalLiteral, CPP14Lexer.HexadecimalLiteral, CPP14Lexer.BinaryLiteral, CPP14Lexer.Integersuffix]
                         
+                        function_content_no_comment = Cparser.removeComment(funcObj.funcBody)
+                        
                         if use_cpp_parser == 0:
-                            cLexer = CLexer(InputStream(funcObj.funcBody))
+                            cLexer = CLexer(InputStream(function_content_no_comment))
                             tokens = cLexer.getAllTokens()
                             tokens = list(tokens)
 
@@ -91,7 +94,7 @@ class Cparser:
                                     tokenAttributes["operators"].append(token.text)
                                     
                         else:
-                            cppLexer = CPP14Lexer(InputStream(funcObj.funcBody))
+                            cppLexer = CPP14Lexer(InputStream(function_content_no_comment))
                             tokens = cppLexer.getAllTokens()
                             tokens = list(tokens)
                             
@@ -103,7 +106,6 @@ class Cparser:
                             
 
 
-                        function_content_no_comment = Cparser.removeComment(funcObj.funcBody)
 
                         line_of_code = len([
                             line for line in function_content_no_comment.split("\n")
@@ -207,6 +209,28 @@ class Cparser:
         with open(finalResultPath, "w") as f:
             f.write(gsonObject)
 
+def test_clexer():
+    filePath = "./debugInput/error.c"
+    with open(filePath, "rb") as f:
+        functionList = []
+        treeParser = TreeParser()
+        funcObjs = treeParser.ParseFile(filePath)
+        for funcObj in funcObjs:
+            print(funcObj.funcBody)
+            print("------------------")
+            cLexer = CLexer(InputStream(funcObj.funcBody))
+            tokens = cLexer.getAllTokens()
+            tokens = list(tokens)
+
+def test_clexer2():
+    filePath = "./debugInput/error.c"
+    antlrFileStream = FileStream(filePath)
+    cLexer = CLexer(antlrFileStream)
+    tokens = cLexer.getAllTokens()
+    tokens = list(tokens)
+    for token in tokens:
+        print(token.text)
+
 
 if __name__ == "__main__":
     
@@ -218,7 +242,17 @@ if __name__ == "__main__":
     repoPath = argv[1]
     concurrent_size = int(argv[2])
     finalResultPath = argv[3]
-
-    Cparser.main(argv[1:])
-
+    test = 0
+    if test == 0:
+        Cparser.main(argv[1:])
+    elif test == 1:
+        print("begin test")
+        test_clexer()
+    elif test == 2:
+        print("begin test2")
+        test_clexer2()
     
+    # parser = TreeParser()
+    # funcObjs:List[Function] =  parser.ParseFile("../input/hello.c")
+    # for funcObj in funcObjs:
+    #     lexer = CLexer(InputStream(funcObj.funcBody))
