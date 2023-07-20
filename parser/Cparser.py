@@ -1,6 +1,7 @@
 import io
 import os
 import sys
+import time
 from antlr4 import *
 from Tree import TreeParser
 
@@ -15,8 +16,10 @@ from CPP14Lexer import CPP14Lexer
 import json
 import hashlib
 import re
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor,ProcessPoolExecutor
+from concurrent import futures
 import math
+import random
 
 from threading import Lock
 
@@ -36,8 +39,10 @@ class Cparser:
     VulMatch_ENGINE_SUPPORT_EXTENSIONS = [".cpp", ".c", ".C", ".cc", ".CPP", ".c++", ".cp"]
 
     class ParseRunnable:
-        def __init__(self, filePaths):
+        def __init__(self, filePaths,index):
             self.filePaths = filePaths
+            self.funcResultList_per_process = []
+            self.index = index
             # self.totalTask = totalTask
 
         def __call__(self):
@@ -57,7 +62,9 @@ class Cparser:
 
                     # parse the function info
                     treeParser = TreeParser()
+                    # continue
                     funcObjs = treeParser.ParseFile(filePath)
+                    # continue
                     # return
 
                     for funcObj in funcObjs:
@@ -97,12 +104,19 @@ class Cparser:
                             cppLexer = CPP14Lexer(InputStream(function_content_no_comment))
                             tokens = cppLexer.getAllTokens()
                             tokens = list(tokens)
+                            old_token = None
                             
                             for token in tokens:
+                                # print("type=={},text=={}".format(token.type,token.text))
+                                
                                 if token.type in CPPoperandsTypes:
                                     tokenAttributes["operands"].append(token.text)
                                 else:
                                     tokenAttributes["operators"].append(token.text)
+                                if token.type == CPP14Lexer.LeftParen:
+                                    if old_token is not None and old_token.type == CPP14Lexer.Identifier:
+                                        funcObj.funcCalleeList.append(old_token.text)
+                                old_token = token
                             
 
 
@@ -124,13 +138,16 @@ class Cparser:
 
                     fileAttr["function_list"] = functionList
 
-                    Cparser.funcResultList.append(fileAttr)
+                    self.funcResultList_per_process.append(fileAttr)
 
                 except Exception as e:
                     print(e)
-                finally:
-                    with Cparser.lock:
-                        Cparser.finished += 1
+            print("process {} finished".format(self.index))
+            return self.funcResultList_per_process       
+                
+                # finally:
+                #     with Cparser.lock:
+                #         Cparser.finished += 1
 
     @staticmethod
     def log2(n):
@@ -179,6 +196,12 @@ class Cparser:
             for file in files:
                 if any(file.endswith(ext) for ext in Cparser.VulMatch_ENGINE_SUPPORT_EXTENSIONS):
                     fileList.append(os.path.join(root, file))
+        # shuffle一下
+        # print(fileList)
+        # print("------------------")
+        random.shuffle(fileList)    
+        # print(fileList)        
+        
         return fileList
 
     @staticmethod
@@ -197,39 +220,23 @@ class Cparser:
 
         chunk_paths = Cparser.chunkSize(filterFileList, concurrent_size)
         
-        # print(repoPath)
-        # print(fileList)
-        # return
+        futures_list = []
 
-        with ThreadPoolExecutor() as executor:
+        with ProcessPoolExecutor(max_workers=concurrent_size) as executor:
+            index = 0
             for filePaths in chunk_paths:
-                executor.submit(Cparser.ParseRunnable(filePaths))
+                futures_list.append(executor.submit(Cparser.ParseRunnable(filePaths,index)))
+                index += 1
+
+            for future in futures.as_completed(futures_list):
+                Cparser.funcResultList.extend(future.result())
+                
 
         gsonObject = json.dumps(Cparser.funcResultList)
         with open(finalResultPath, "w") as f:
             f.write(gsonObject)
 
-def test_clexer():
-    filePath = "./debugInput/error.c"
-    with open(filePath, "rb") as f:
-        functionList = []
-        treeParser = TreeParser()
-        funcObjs = treeParser.ParseFile(filePath)
-        for funcObj in funcObjs:
-            print(funcObj.funcBody)
-            print("------------------")
-            cLexer = CLexer(InputStream(funcObj.funcBody))
-            tokens = cLexer.getAllTokens()
-            tokens = list(tokens)
 
-def test_clexer2():
-    filePath = "./debugInput/error.c"
-    antlrFileStream = FileStream(filePath)
-    cLexer = CLexer(antlrFileStream)
-    tokens = cLexer.getAllTokens()
-    tokens = list(tokens)
-    for token in tokens:
-        print(token.text)
 
 
 if __name__ == "__main__":
@@ -243,6 +250,7 @@ if __name__ == "__main__":
     concurrent_size = int(argv[2])
     finalResultPath = argv[3]
     test = 0
+    startTime = time.time()
     if test == 0:
         Cparser.main(argv[1:])
     elif test == 1:
@@ -251,8 +259,7 @@ if __name__ == "__main__":
     elif test == 2:
         print("begin test2")
         test_clexer2()
+    endTime = time.time()
+    elapsed_time = endTime - startTime
+    print("Elapsed Time: {:.2f} seconds".format(elapsed_time))
     
-    # parser = TreeParser()
-    # funcObjs:List[Function] =  parser.ParseFile("../input/hello.c")
-    # for funcObj in funcObjs:
-    #     lexer = CLexer(InputStream(funcObj.funcBody))

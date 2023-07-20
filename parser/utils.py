@@ -156,6 +156,7 @@ class BodyParser(ParseTreeListener):
             self.typeNameFlag = 1
         # elif ruleIndex == BodyParser.IDX[BodyParser.FUNCTION_CALL]:
         #     self.funcCallFlag = 1
+        # 这个类中，FUNCTION_CALL其实是idertifier，之所以这么设计，我猜是因为functionParser中，没有function_call这个规则，只有identifier。所以不应该用这个规则来判断
         elif type(ctx) == FunctionParser.FuncCallContext:
             self.funcCallFlag = 1
 
@@ -197,7 +198,11 @@ class BodyParser(ParseTreeListener):
             # print("funccallFlag")
             try:
                 p1:TerminalNodeImpl = node 
+                # print(p1.getText())
+                # print(p1.getSymbol())
                 p1 = p1.getParent()
+                # print(p1.getText())
+                # print(type(p1))
                 if isinstance(p1, FunctionParser.IdentifierContext):#FuncCallContext
                     # print(p1.getText())
                     self.funcCallStr += Trees.getNodeText(node, self.ruleNames)

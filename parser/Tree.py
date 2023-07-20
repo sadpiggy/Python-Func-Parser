@@ -15,6 +15,7 @@ from utils import Function, JobInstance
 
 from concurrent import futures
 import multiprocessing
+import utils
 
 from typing import List
 
@@ -30,6 +31,9 @@ class TreeParser(ParseTreeListener):
     TYPE_NAME = 4
     FUNCTION_CALL = 5
     COMPOUND_STMT = 6
+    
+    collect_callee = 0
+    use_multi_thread = 0
 
     table = ["function_def", "function_name", "parameter_name",
              "declarator", "type_name", "identifier", "compound_statement"]
@@ -41,7 +45,7 @@ class TreeParser(ParseTreeListener):
         super().__init__()
 
         self.executorService:futures.ThreadPoolExecutor = None
-        self.future_list:List[futures.Future] = []
+        self.function_list:List[Function] = []
         self.functionInstance = None
 
         self.funcNameFlag = 0
@@ -96,7 +100,7 @@ class TreeParser(ParseTreeListener):
     def ParseFile(self, srcFileName, bSLL=0)->List[Function]:
         ret = []
         try:
-            antlrFileStream = FileStream(srcFileName)
+            antlrFileStream = FileStream(srcFileName, encoding='utf-8')
             lexer = ModuleLexer(antlrFileStream)
             tokens = CommonTokenStream(lexer)
             parser = ModuleParser(tokens)
@@ -129,9 +133,9 @@ class TreeParser(ParseTreeListener):
 
             ParseTreeWalker.DEFAULT.walk(self, tree)
 
-            for future in self.future_list:
+            for function_ in self.function_list:
                 #修改future.get()为future.result()
-                ret.append(future.result())
+                ret.append(function_)
 
         except Exception as e:
             # e.printStackTrace() 没有这个函数，也不知道替代品
@@ -150,7 +154,7 @@ class TreeParser(ParseTreeListener):
             self.funcDefFlag = 1
             self.functionInstance = Function(self.srcFileName)
             self.functionInstance.parentNumLoc = self.numLines
-            self.functionInstance.funcId = len(self.future_list) + 1
+            self.functionInstance.funcId = len(self.function_list) + 1
             self.functionInstance.lineStart = ctx.start.line#ctx.getStart().getLine()
             self.functionInstance.lineStop = ctx.stop.line#ctx.getStop().getLine()
         elif self.funcDefFlag == 0:
@@ -196,9 +200,17 @@ class TreeParser(ParseTreeListener):
             
             self.functionInstance.funcBody = string
 
-            self.future_list.append(
-                self.executorService.submit(JobInstance(string, self.functionInstance, line, self.enableSLL))
-            )
+            # self.function_list.append(
+            #     self.executorService.submit(JobInstance(string, self.functionInstance, line, self.enableSLL)).result()
+            # )
+            if TreeParser.collect_callee == 1:
+                if TreeParser.use_multi_thread == 1:
+                    self.executorService.submit(JobInstance(string, self.functionInstance, line, self.enableSLL))
+                else:
+                    p = utils.BodyParser()
+                    p.ParseString(string, self.functionInstance, line, self.enableSLL)
+                    
+            self.function_list.append(self.functionInstance)
 
     def visitTerminal(self, node):
         if self.compoundStmtFlag != 0 or self.funcDefFlag == 0:
@@ -215,7 +227,7 @@ class TreeParser(ParseTreeListener):
 
 if __name__ == "__main__":
     parser = TreeParser()
-    funcObjs:List[Function] =  parser.ParseFile("../input/hello.c")
+    funcObjs:List[Function] =  parser.ParseFile("../debugInput/error.c")
     for funcObj in funcObjs:
         print(funcObj.name)
         print(funcObj.lineStart)
