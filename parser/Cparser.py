@@ -46,6 +46,8 @@ class Cparser:
             # self.totalTask = totalTask
 
         def __call__(self):
+            # if self.index == 1:
+            #     print(self.filePaths)
             for filePath in self.filePaths:
                 try:
                     # check file hash is existed
@@ -64,6 +66,9 @@ class Cparser:
                     treeParser = TreeParser()
                     # continue
                     funcObjs = treeParser.ParseFile(filePath)
+                    if funcObjs is None:
+                        print(filePath)
+                        continue
                     # continue
                     # return
 
@@ -229,7 +234,10 @@ class Cparser:
                 index += 1
 
             for future in futures.as_completed(futures_list):
-                Cparser.funcResultList.extend(future.result())
+                try:
+                    Cparser.funcResultList.extend(future.result())
+                except Exception as e:
+                    print("error in funcResultListExtend: {}".format(e))
                 
 
         gsonObject = json.dumps(Cparser.funcResultList)
@@ -249,16 +257,16 @@ if __name__ == "__main__":
     repoPath = argv[1]
     concurrent_size = int(argv[2])
     finalResultPath = argv[3]
-    test = 0
+    # test = 0
     startTime = time.time()
-    if test == 0:
-        Cparser.main(argv[1:])
-    elif test == 1:
-        print("begin test")
-        test_clexer()
-    elif test == 2:
-        print("begin test2")
-        test_clexer2()
+    # if test == 0:
+    Cparser.main(argv[1:])
+    # elif test == 1:
+    #     print("begin test")
+    #     test_clexer()
+    # elif test == 2:
+    #     print("begin test2")
+    #     test_clexer2()
     endTime = time.time()
     elapsed_time = endTime - startTime
     print("Elapsed Time: {:.2f} seconds".format(elapsed_time))

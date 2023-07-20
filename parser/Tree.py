@@ -33,7 +33,7 @@ class TreeParser(ParseTreeListener):
     COMPOUND_STMT = 6
     
     collect_callee = 0
-    use_multi_thread = 0
+    # use_multi_thread = 0
 
     table = ["function_def", "function_name", "parameter_name",
              "declarator", "type_name", "identifier", "compound_statement"]
@@ -44,7 +44,7 @@ class TreeParser(ParseTreeListener):
     def __init__(self):
         super().__init__()
 
-        self.executorService:futures.ThreadPoolExecutor = None
+        # self.executorService:futures.ThreadPoolExecutor = None
         self.function_list:List[Function] = []
         self.functionInstance = None
 
@@ -68,7 +68,7 @@ class TreeParser(ParseTreeListener):
 
     # 
     def _init(self, parser:ModuleParser):
-        self.executorService = futures.ThreadPoolExecutor(max_workers=multiprocessing.cpu_count())
+        # self.executorService = futures.ThreadPoolExecutor(max_workers=multiprocessing.cpu_count())
 
         self.functionInstance = None
 
@@ -105,6 +105,7 @@ class TreeParser(ParseTreeListener):
             tokens = CommonTokenStream(lexer)
             parser = ModuleParser(tokens)
             parser.removeErrorListeners()
+            # return ret
             
             # print("after removeErrorListeners")
             
@@ -116,10 +117,14 @@ class TreeParser(ParseTreeListener):
                 # parser.setErrorHandler(BailErrorStrategy())
 
             #和原版相比，缺少一个错误处理（python版或者此版本antlr，没有这个类）
+            # return ret
+            # max_recursion_depth = sys.getrecursionlimit()
+            sys.setrecursionlimit(2000)
+            # print("max_recursion_depth: ", max_recursion_depth)
+            # return ret
             tree = parser.code()
-            # print("before initparser")
+            # return ret
             self._init(parser)
-            # print("after initparser")
             self.enableSLL = bSLL
 
             with open(srcFileName, 'r') as file:
@@ -130,7 +135,7 @@ class TreeParser(ParseTreeListener):
 
             self.srcFileName = srcFileName
 
-
+                
             ParseTreeWalker.DEFAULT.walk(self, tree)
 
             for function_ in self.function_list:
@@ -140,10 +145,10 @@ class TreeParser(ParseTreeListener):
         except Exception as e:
             # e.printStackTrace() 没有这个函数，也不知道替代品
             print(e)
-            self.executorService.shutdown()
+            # self.executorService.shutdown()
             return None
 
-        self.executorService.shutdown()
+        # self.executorService.shutdown()
         return ret
 
     def enterEveryRule(self, ctx:ParserRuleContext):
@@ -204,11 +209,11 @@ class TreeParser(ParseTreeListener):
             #     self.executorService.submit(JobInstance(string, self.functionInstance, line, self.enableSLL)).result()
             # )
             if TreeParser.collect_callee == 1:
-                if TreeParser.use_multi_thread == 1:
-                    self.executorService.submit(JobInstance(string, self.functionInstance, line, self.enableSLL))
-                else:
-                    p = utils.BodyParser()
-                    p.ParseString(string, self.functionInstance, line, self.enableSLL)
+                # if TreeParser.use_multi_thread == 1:
+                #     self.executorService.submit(JobInstance(string, self.functionInstance, line, self.enableSLL))
+                # else:
+                p = utils.BodyParser()
+                p.ParseString(string, self.functionInstance, line, self.enableSLL)
                     
             self.function_list.append(self.functionInstance)
 
