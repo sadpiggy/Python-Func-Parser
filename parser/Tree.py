@@ -44,7 +44,6 @@ class TreeParser(ParseTreeListener):
     def __init__(self):
         super().__init__()
 
-        # self.executorService:futures.ThreadPoolExecutor = None
         self.function_list:List[Function] = []
         self.functionInstance = None
 
@@ -63,12 +62,10 @@ class TreeParser(ParseTreeListener):
 
         self.srcFileName = ""
         self.numLines = 0
-        # what is ssl?
+        
         self.enableSLL = 0
 
-    # 
     def _init(self, parser:ModuleParser):
-        # self.executorService = futures.ThreadPoolExecutor(max_workers=multiprocessing.cpu_count())
 
         self.functionInstance = None
 
@@ -105,54 +102,36 @@ class TreeParser(ParseTreeListener):
             tokens = CommonTokenStream(lexer)
             parser = ModuleParser(tokens)
             parser.removeErrorListeners()
-            # return ret
-            
-            # print("after removeErrorListeners")
-            
-            #也不知道对不对
+
             if bSLL != 0:
                 parser._interp.predictionMode = PredictionMode.SLL
                 parser._errHandler = BailErrorStrategy()
-                # parser.getInterpreter().setPredictionMode(PredictionMode.SLL)
-                # parser.setErrorHandler(BailErrorStrategy())
 
-            #和原版相比，缺少一个错误处理（python版或者此版本antlr，没有这个类）
-            # return ret
-            # max_recursion_depth = sys.getrecursionlimit()
             sys.setrecursionlimit(2000)
-            # print("max_recursion_depth: ", max_recursion_depth)
-            # return ret
+
             tree = parser.code()
-            # return ret
+
             self._init(parser)
             self.enableSLL = bSLL
 
             with open(srcFileName, 'r') as file:
                 self.numLines = sum(1 for _ in file)
                 
-            # print("numLines: ", self.numLines)
-
-
             self.srcFileName = srcFileName
 
                 
             ParseTreeWalker.DEFAULT.walk(self, tree)
 
             for function_ in self.function_list:
-                #修改future.get()为future.result()
                 ret.append(function_)
 
         except Exception as e:
-            # e.printStackTrace() 没有这个函数，也不知道替代品
             print(e)
-            # self.executorService.shutdown()
             return None
 
-        # self.executorService.shutdown()
         return ret
 
     def enterEveryRule(self, ctx:ParserRuleContext):
-        # print("enter")
         ruleIndex = ctx.getRuleIndex()
 
         if ruleIndex == TreeParser.IDX[TreeParser.FUNCTION_DEF]:
@@ -160,8 +139,8 @@ class TreeParser(ParseTreeListener):
             self.functionInstance = Function(self.srcFileName)
             self.functionInstance.parentNumLoc = self.numLines
             self.functionInstance.funcId = len(self.function_list) + 1
-            self.functionInstance.lineStart = ctx.start.line#ctx.getStart().getLine()
-            self.functionInstance.lineStop = ctx.stop.line#ctx.getStop().getLine()
+            self.functionInstance.lineStart = ctx.start.line
+            self.functionInstance.lineStop = ctx.stop.line
         elif self.funcDefFlag == 0:
             return
         elif ruleIndex == TreeParser.IDX[TreeParser.FUNCTION_NAME]:
@@ -174,7 +153,6 @@ class TreeParser(ParseTreeListener):
             self.compoundStmtFlag = 1
 
     def exitEveryRule(self, ctx:ParserRuleContext):
-        # print("exit")
         ruleIndex = ctx.getRuleIndex()
 
         if ruleIndex == TreeParser.IDX[TreeParser.FUNCTION_DEF] and self.funcDefFlag != 0:
@@ -193,25 +171,16 @@ class TreeParser(ParseTreeListener):
             self.typeNameStr = ""
         elif ruleIndex == TreeParser.IDX[TreeParser.COMPOUND_STMT] and self.compoundStmtFlag != 0:
             self.compoundStmtFlag = 0
-            # 猜的，不知道是不是InputStream
             inputStream:InputStream = ctx.start.getInputStream()
-            #修改
-            start_index = ctx.start.stop #ctx.start.getStopIndex()
-            stop_index = ctx.stop.stop #ctx.stop.getStopIndex();
+            start_index = ctx.start.stop 
+            stop_index = ctx.stop.stop 
             
-            # string = inputStream.getText(Interval(start_index + 1, stop_index - 1))
             string = inputStream.getText(start_index + 1,stop_index - 1)
             line = ctx.start.line
             
             self.functionInstance.funcBody = string
 
-            # self.function_list.append(
-            #     self.executorService.submit(JobInstance(string, self.functionInstance, line, self.enableSLL)).result()
-            # )
             if TreeParser.collect_callee == 1:
-                # if TreeParser.use_multi_thread == 1:
-                #     self.executorService.submit(JobInstance(string, self.functionInstance, line, self.enableSLL))
-                # else:
                 p = utils.BodyParser()
                 p.ParseString(string, self.functionInstance, line, self.enableSLL)
                     

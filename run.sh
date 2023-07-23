@@ -1,1 +1,1 @@
-python parser/Cparser.py ./input 4 output/result.json
+python parser/Cparser.py /home/srb/wky/lab/ntu/gitrepos/openssl 12 output/result.json

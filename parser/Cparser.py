@@ -43,14 +43,10 @@ class Cparser:
             self.filePaths = filePaths
             self.funcResultList_per_process = []
             self.index = index
-            # self.totalTask = totalTask
 
         def __call__(self):
-            # if self.index == 1:
-            #     print(self.filePaths)
             for filePath in self.filePaths:
                 try:
-                    # check file hash is existed
                     with open(filePath, "rb") as f:
                         file_hash = hashlib.md5(f.read()).hexdigest()
 
@@ -62,15 +58,12 @@ class Cparser:
 
                     functionList = []
 
-                    # parse the function info
                     treeParser = TreeParser()
                     # continue
                     funcObjs = treeParser.ParseFile(filePath)
                     if funcObjs is None:
                         print(filePath)
                         continue
-                    # continue
-                    # return
 
                     for funcObj in funcObjs:
                         functionAttr = {
@@ -87,7 +80,7 @@ class Cparser:
                         
                         
                         CoperandsTypes = [CLexer.Identifier,CLexer.Constant,CLexer.DigitSequence,CLexer.StringLiteral]
-                        # 具体有哪些呢？
+                       
                         CPPoperandsTypes = [CPP14Lexer.Identifier, CPP14Lexer.IntegerLiteral, CPP14Lexer.CharacterLiteral, CPP14Lexer.FloatingLiteral, CPP14Lexer.StringLiteral, CPP14Lexer.BooleanLiteral, CPP14Lexer.PointerLiteral,CPP14Lexer.UserDefinedLiteral,
                                             CPP14Lexer.UserDefinedCharacterLiteral, CPP14Lexer.UserDefinedFloatingLiteral, CPP14Lexer.UserDefinedIntegerLiteral, CPP14Lexer.UserDefinedStringLiteral,
                                             CPP14Lexer.DecimalLiteral, CPP14Lexer.OctalLiteral, CPP14Lexer.HexadecimalLiteral, CPP14Lexer.BinaryLiteral, CPP14Lexer.Integersuffix]
@@ -112,8 +105,6 @@ class Cparser:
                             old_token = None
                             
                             for token in tokens:
-                                # print("type=={},text=={}".format(token.type,token.text))
-                                
                                 if token.type in CPPoperandsTypes:
                                     tokenAttributes["operands"].append(token.text)
                                 else:
@@ -149,10 +140,6 @@ class Cparser:
                     print(e)
             print("process {} finished".format(self.index))
             return self.funcResultList_per_process       
-                
-                # finally:
-                #     with Cparser.lock:
-                #         Cparser.finished += 1
 
     @staticmethod
     def log2(n):
@@ -201,25 +188,16 @@ class Cparser:
             for file in files:
                 if any(file.endswith(ext) for ext in Cparser.VulMatch_ENGINE_SUPPORT_EXTENSIONS):
                     fileList.append(os.path.join(root, file))
-        # shuffle一下
-        # print(fileList)
-        # print("------------------")
+        # shullfe fileList to balance the workload
         random.shuffle(fileList)    
-        # print(fileList)        
-        
         return fileList
 
     @staticmethod
     def main(args):
-        # global funcResultList, finished, finalResultPath, repoPath, targetFileListPath, targetFileList
-
         Cparser.repoPath = args[0]
         concurrent_size = int(args[1])
         Cparser.finalResultPath = args[2]
-
-
         Cparser.finished = 0
-
         fileList = Cparser.getCFileList(repoPath)
         filterFileList = Cparser.targetFileList if Cparser.targetFileList else fileList
 
@@ -257,16 +235,11 @@ if __name__ == "__main__":
     repoPath = argv[1]
     concurrent_size = int(argv[2])
     finalResultPath = argv[3]
-    # test = 0
+    
     startTime = time.time()
-    # if test == 0:
+    
     Cparser.main(argv[1:])
-    # elif test == 1:
-    #     print("begin test")
-    #     test_clexer()
-    # elif test == 2:
-    #     print("begin test2")
-    #     test_clexer2()
+    
     endTime = time.time()
     elapsed_time = endTime - startTime
     print("Elapsed Time: {:.2f} seconds".format(elapsed_time))

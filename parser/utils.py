@@ -107,7 +107,6 @@ class BodyParser(ParseTreeListener):
         self.enableSLL = 0
 
         if BodyParser.IS_FIRST != 0:
-            #修改，getRuleNames()修改为ruleNames
             self.ruleNames = parser.ruleNames
 
             for i in range(len(parser.ruleNames)):
@@ -128,8 +127,6 @@ class BodyParser(ParseTreeListener):
         if bSLL != 0:
             parser._interp.predictionMode = PredictionMode.SLL
             parser._errHandler = BailErrorStrategy()
-            # parser.getInterpreter().setPredictionMode(PredictionMode.SLL)
-            # parser.setErrorHandler(BailErrorStrategy())
 
         tree = parser.statements()
 
@@ -142,26 +139,18 @@ class BodyParser(ParseTreeListener):
             self.defaultLine = line - 1
 
         ParseTreeWalker.DEFAULT.walk(self, tree)
-        # walker = ParseTreeWalker()
-        # walker.walk(self, tree)
 
     def enterEveryRule(self, ctx:ParserRuleContext):
-        # print("enterEveryRule")
-        # print(type(ctx))
         ruleIndex = ctx.getRuleIndex()
 
         if ruleIndex == BodyParser.IDX[BodyParser.DECLARATOR]:
             self.declaratorFlag = 1
         elif ruleIndex == BodyParser.IDX[BodyParser.TYPE_NAME]:
             self.typeNameFlag = 1
-        # elif ruleIndex == BodyParser.IDX[BodyParser.FUNCTION_CALL]:
-        #     self.funcCallFlag = 1
-        # 这个类中，FUNCTION_CALL其实是idertifier，之所以这么设计，我猜是因为functionParser中，没有function_call这个规则，只有identifier。所以不应该用这个规则来判断
         elif type(ctx) == FunctionParser.FuncCallContext:
             self.funcCallFlag = 1
 
     def exitEveryRule(self, ctx:ParserRuleContext):
-        # print("exitEveryRule")
         ruleIndex = ctx.getRuleIndex()
 
         if ruleIndex == BodyParser.IDX[BodyParser.DECLARATOR] and self.declaratorFlag != 0:
@@ -195,20 +184,13 @@ class BodyParser(ParseTreeListener):
             self.typeNameStr += Trees.getNodeText(node, self.ruleNames)
             self.typeNameStr += ' '
         elif self.funcCallFlag != 0:
-            # print("funccallFlag")
             try:
                 p1:TerminalNodeImpl = node 
-                # print(p1.getText())
-                # print(p1.getSymbol())
                 p1 = p1.getParent()
-                # print(p1.getText())
-                # print(type(p1))
-                if isinstance(p1, FunctionParser.IdentifierContext):#FuncCallContext
-                    # print(p1.getText())
+                if isinstance(p1, FunctionParser.IdentifierContext):
                     self.funcCallStr += Trees.getNodeText(node, self.ruleNames)
                     self.funcCallStr += ' '
                     self.funcCallFlag = 2
-                    # print(self.funcCallStr)
             except Exception as e:
                 print(e)
                 pass
