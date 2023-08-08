@@ -9,8 +9,8 @@ from antlr4.InputStream import InputStream
 from antlr4.CommonTokenStream import CommonTokenStream
 from antlr4.atn.PredictionMode import PredictionMode
 
-from ModuleLexer import ModuleLexer
-from ModuleParser import ModuleParser
+from c.ModuleLexer import ModuleLexer
+from c.ModuleParser import ModuleParser
 from utils import Function, JobInstance
 
 from concurrent import futures
@@ -103,10 +103,6 @@ class TreeParser(ParseTreeListener):
             parser = ModuleParser(tokens)
             parser.removeErrorListeners()
 
-            if bSLL != 0:
-                parser._interp.predictionMode = PredictionMode.SLL
-                parser._errHandler = BailErrorStrategy()
-
             sys.setrecursionlimit(2000)
 
             tree = parser.code()
@@ -180,9 +176,9 @@ class TreeParser(ParseTreeListener):
             
             self.functionInstance.funcBody = string
 
-            if TreeParser.collect_callee == 1:
-                p = utils.BodyParser()
-                p.ParseString(string, self.functionInstance, line, self.enableSLL)
+            # if TreeParser.collect_callee == 1:
+            #     p = utils.BodyParser()
+            #     p.ParseString(string, self.functionInstance, line, self.enableSLL)
                     
             self.function_list.append(self.functionInstance)
 

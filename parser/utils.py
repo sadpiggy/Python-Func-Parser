@@ -11,8 +11,8 @@ from antlr4.CommonTokenStream import CommonTokenStream
 from antlr4.atn.PredictionMode import PredictionMode
 from antlr4.Token import CommonToken
 
-from FunctionParser import FunctionParser
-from FunctionLexer import FunctionLexer
+from c.FunctionParser import FunctionParser
+from c.FunctionLexer import FunctionLexer
 
 
 class Function:

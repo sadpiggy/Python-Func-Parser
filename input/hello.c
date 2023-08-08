@@ -1,10 +1,9 @@
-#include <stdio.h>
+local int test_and_set(flag)
+    int volatile *flag;
+{
+    int was;
 
-// int getpig(int a,int b){
-//     return a+b;
-// }
-
-int main(int a){
-    printf("hello");
-    int b = a + 1;
+    was = *flag;
+    *flag = 1;
+    return was;
 }
