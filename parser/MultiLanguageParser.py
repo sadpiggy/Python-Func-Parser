@@ -114,6 +114,7 @@ class MultiLanguageparser:
                             javaLexer = JavaLexer(InputStream(function_content_no_comment))
                             tokens = javaLexer.getAllTokens()
                         elif MultiLanguageparser.targetLanguage == "cpp":
+                            function_content_no_comment = MultiLanguageparser.removeComment(funcObj.funcBody)
                             cppLexer = CPP14Lexer(InputStream(function_content_no_comment))
                             tokens = cppLexer.getAllTokens()
                         elif MultiLanguageparser.targetLanguage == "python":
