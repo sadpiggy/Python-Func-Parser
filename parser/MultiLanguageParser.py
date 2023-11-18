@@ -28,6 +28,8 @@ import math
 import random
 
 from threading import Lock
+import subprocess
+from graphviz import render
 
 use_cpp_parser = 1
 
@@ -292,19 +294,44 @@ class MultiLanguageparser:
         with open(finalResultPath, "w") as f:
             f.write(gsonObject)
 
+# def convert_dot_to_png(folder_path):
+#     for filename in os.listdir(folder_path):
+#         print(filename)
+#         if filename.endswith('.dot'):
+#             dot_file = os.path.join(folder_path, filename)
+#             print(dot_file)
+#             output_file = os.path.splitext(dot_file)[0]  # 移除 .dot 扩展名
+#             render('dot', 'png', dot_file, outfile=output_file+'.png')
+
+def convert_dot_to_png(folder_path):
+    for root, dirs, files in os.walk(folder_path):
+        for filename in files:
+            if filename.endswith('.dot'):
+                dot_file = os.path.join(root, filename)
+                output_file = os.path.splitext(dot_file)[0] + '.png'
+                render('dot', 'png', dot_file, outfile=output_file)
 
 
+def run_command(command):
+    try:
+        # 在 shell 中执行命令
+        subprocess.run(command, shell=True, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error executing command: {e}")
 
 if __name__ == "__main__":
     
     argv = sys.argv
     argc = len(argv)
-    if argc < 4:
-        print("Usage: python3 CParser.py <repoPath> <concurrent_size> <finalResultPath> <targetLanguage>=[cpp/c,java,python]")
+    if argc < 5:
+        print("Usage: python3 CParser.py <repoPath> <concurrent_size> <finalResultPath> <targetLanguage>=[cpp/c,java,python] <cfg>=[none,cfg,cpg,dpg]")
         exit(1)
     repoPath = argv[1]
     concurrent_size = int(argv[2])
-    finalResultPath = argv[3]
+    finalResultDir = argv[3]
+    # /result.json
+    finalResultPath = argv[3] + '/result.json'
+    
     
     targetLanguage = argv[4]
     if targetLanguage == "c":
@@ -315,6 +342,25 @@ if __name__ == "__main__":
     MultiLanguageparser.main(argv[1:])
     
     endTime = time.time()
+    
     elapsed_time = endTime - startTime
-    print("Elapsed Time: {:.2f} seconds".format(elapsed_time))
+    print("generator json Time: {:.2f} seconds".format(elapsed_time))
+    
+    if argc == 6 and argv[5] != 'none':
+        start_joern_Time = time.time()
+        generate_type = argv[5]
+        outputPath = finalResultDir + "/{}_output".format(generate_type)
+        cmd0 = "rm -rf {} >/dev/null".format(outputPath)
+        cmd1 = "joern-parse {} >/dev/null".format(repoPath)
+        cmd2 = "joern-export --repr {} --out {} >/dev/null".format(generate_type,outputPath)
+        cmd3 = "rm cpg.bin >/dev/null"
+        run_command(cmd0)
+        run_command(cmd1)
+        run_command(cmd2)
+        run_command(cmd3)
+        convert_dot_to_png(outputPath)
+        end_joern_Time = time.time()
+        elapsed_time = end_joern_Time - start_joern_Time
+        print("generator {} Time: {:.2f} seconds".format(generate_type,elapsed_time))
+        
     
