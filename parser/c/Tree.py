@@ -104,9 +104,7 @@ class TreeParser(ParseTreeListener):
             parser.removeErrorListeners()
 
             sys.setrecursionlimit(2000)
-
             tree = parser.code()
-
             self._init(parser)
             self.enableSLL = bSLL
 
@@ -115,7 +113,6 @@ class TreeParser(ParseTreeListener):
                 
             self.srcFileName = srcFileName
 
-                
             ParseTreeWalker.DEFAULT.walk(self, tree)
 
             for function_ in self.function_list:
@@ -197,7 +194,7 @@ class TreeParser(ParseTreeListener):
 
 if __name__ == "__main__":
     parser = TreeParser()
-    funcObjs:List[Function] =  parser.ParseFile("../debugInput/error.c")
+    funcObjs:List[Function] =  parser.ParseFile("../../input/test/test.c")
     for funcObj in funcObjs:
         print(funcObj.name)
         print(funcObj.lineStart)

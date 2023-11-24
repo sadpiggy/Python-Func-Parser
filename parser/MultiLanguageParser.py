@@ -79,7 +79,11 @@ class MultiLanguageparser:
                     elif MultiLanguageparser.targetLanguage == "python":
                         treeParser = PythonTreeParser()
                     # continue
+                    # print("finepath=={}".format(filePath))
                     funcObjs = treeParser.ParseFile(filePath)
+                    
+                    # print("after path file")
+                    
                     if funcObjs is None:
                         print(filePath)
                         continue
@@ -302,7 +306,7 @@ class MultiLanguageparser:
 #             print(dot_file)
 #             output_file = os.path.splitext(dot_file)[0]  # 移除 .dot 扩展名
 #             render('dot', 'png', dot_file, outfile=output_file+'.png')
-
+# todo：加上并行
 def convert_dot_to_png(folder_path):
     for root, dirs, files in os.walk(folder_path):
         for filename in files:
@@ -324,7 +328,7 @@ if __name__ == "__main__":
     argv = sys.argv
     argc = len(argv)
     if argc < 5:
-        print("Usage: python3 CParser.py <repoPath> <concurrent_size> <finalResultPath> <targetLanguage>=[cpp/c,java,python] <cfg>=[none,cfg,cpg,dpg]")
+        print("Usage: python3 CParser.py <repoPath> <concurrent_size> <finalResultPath> <targetLanguage>=[cpp/c,java,python] <cfg>=[none,cfg,cpg,dpg] <graph>=[none,graph]")
         exit(1)
     repoPath = argv[1]
     concurrent_size = int(argv[2])
@@ -346,7 +350,7 @@ if __name__ == "__main__":
     elapsed_time = endTime - startTime
     print("generator json Time: {:.2f} seconds".format(elapsed_time))
     
-    if argc == 6 and argv[5] != 'none':
+    if argc >= 6 and argv[5] != 'none':
         start_joern_Time = time.time()
         generate_type = argv[5]
         outputPath = finalResultDir + "/{}_output".format(generate_type)
@@ -356,9 +360,13 @@ if __name__ == "__main__":
         cmd3 = "rm cpg.bin >/dev/null"
         run_command(cmd0)
         run_command(cmd1)
+        print("finish joern-parse")
         run_command(cmd2)
+        print("finish {}.dot generate".format(generate_type))
         run_command(cmd3)
-        convert_dot_to_png(outputPath)
+        if argc == 7 and argv[6] != 'none':
+            convert_dot_to_png(outputPath)
+            print("finish graph generate")
         end_joern_Time = time.time()
         elapsed_time = end_joern_Time - start_joern_Time
         print("generator {} Time: {:.2f} seconds".format(generate_type,elapsed_time))
